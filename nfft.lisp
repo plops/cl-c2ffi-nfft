@@ -38,22 +38,30 @@
 
 (cffi:load-foreign-library "/usr/local/lib/libnfft3.so")
 
-;; try a 1d example (d=1)
-(let ((nr-nonequi-nodes 128)
-      (nr-fourier-coefs 128))
+;; https://www-user.tu-chemnitz.de/~potts/nfft/guide3/html/node40.html
+#+nil
+(let ((d 1) ;; spatial dimension
+      (N 128) ;; number of fourier coefficients
+      (M 128) ;; number of non-equidistant nodes 
+      )
   (autowrap:with-alloc (plan 'nfft-plan)
     (unwind-protect
      (progn
-       (nfft-init-1d plan nr-fourier-coefs nr-nonequi-nodes)
+       (nfft-init-1d plan N M)
        (setf (nfft-plan.flags plan) +PRE-ONE-PSI+)
-       (let* ((xl (loop for i below nr-nonequi-nodes collect
-		       (+ (random .1) -.5 (* (/ 1d0 nr-nonequi-nodes) i))))
-	      (x (make-array nr-nonequi-nodes :element-type 'double-float
-			     :initial-contents xl)))
-	 (sb-sys:with-pinned-objects (x)
-	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x))
+       (let* ((xl (loop for i below M ;; *d  , values in -.5 .. .5
+		     collect
+		       (+ -.5 (* (/ 1d0 M) i))))
+	      (x (make-array (length xl) :element-type 'double-float
+			     :initial-contents xl))
+	      (f^ (make-array N :element-type '(complex double-float))))
+	 (setf (aref f^ 2) .1)
+	 (sb-sys:with-pinned-objects (x f^)
+	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x)
+		 (nfft-plan.f-hat plan) (sb-sys:vector-sap f^))
 	   (sb-int:with-float-traps-masked (:overflow :invalid)
-	    (nfft-precompute-one-psi plan)))))
+	     (nfft-precompute-one-psi plan))
+	   (nfft-trafo plan))))
       (nfft-finalize plan))))
 #+nil
 (truncate
