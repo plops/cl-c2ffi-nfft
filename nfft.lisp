@@ -38,10 +38,15 @@
 
 (cffi:load-foreign-library "/usr/local/lib/libnfft3.so")
 
-(autowrap:with-alloc (plan 'nfft-plan)
-  (nfft-init-1d (autowrap:ptr plan)
-		128
-		128))
+;; try a 1d example (d=1)
+(let ((nr-nonequi-nodes 128)
+      (nr-fourier-coefs 128))
+ (autowrap:with-alloc (plan 'nfft-plan)
+   (nfft-init-1d plan nr-fourier-coefs nr-nonequi-nodes)
+   (dotimes (i nr-nonequi-nodes)
+     (setf
+      (cffi:mem-aref (nfft-plan.x plan) :double i)
+      (+ -.5 (* (/ 1d0 nr-nonequi-nodes) i))))))
 #+nil
 (truncate
  (autowrap:foreign-record-bit-size
