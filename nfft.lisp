@@ -41,12 +41,20 @@
 ;; try a 1d example (d=1)
 (let ((nr-nonequi-nodes 128)
       (nr-fourier-coefs 128))
- (autowrap:with-alloc (plan 'nfft-plan)
-   (nfft-init-1d plan nr-fourier-coefs nr-nonequi-nodes)
-   (dotimes (i nr-nonequi-nodes)
-     (setf
-      (cffi:mem-aref (nfft-plan.x plan) :double i)
-      (+ -.5 (* (/ 1d0 nr-nonequi-nodes) i))))))
+  (autowrap:with-alloc (plan 'nfft-plan)
+    (unwind-protect
+     (progn
+       (nfft-init-1d plan nr-fourier-coefs nr-nonequi-nodes)
+       (setf (nfft-plan.flags plan) +PRE-ONE-PSI+)
+       (let* ((xl (loop for i below nr-nonequi-nodes collect
+		       (+ (random .1) -.5 (* (/ 1d0 nr-nonequi-nodes) i))))
+	      (x (make-array nr-nonequi-nodes :element-type 'double-float
+			     :initial-contents xl)))
+	 (sb-sys:with-pinned-objects (x)
+	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x))
+	   (sb-int:with-float-traps-masked (:overflow :invalid)
+	    (nfft-precompute-one-psi plan)))))
+      (nfft-finalize plan))))
 #+nil
 (truncate
  (autowrap:foreign-record-bit-size
