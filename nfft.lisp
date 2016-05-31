@@ -41,24 +41,26 @@
 ;; https://www-user.tu-chemnitz.de/~potts/nfft/guide3/html/node40.html
 #+nil
 (let ((d 1) ;; spatial dimension
-      (N 128) ;; number of fourier coefficients
-      (M 128) ;; number of non-equidistant nodes 
+      (N 14) ;; number of fourier coefficients
+      (M 19) ;; number of non-equidistant nodes 
       )
   (autowrap:with-alloc (plan 'nfft-plan)
     (unwind-protect
      (progn
        (nfft-init-1d plan N M)
+       (nfft-vrand-shifed-unit-double (nfft-plan.x plan)
+				      (nfft-plan.m-total plan))
        (setf (nfft-plan.flags plan) +PRE-ONE-PSI+)
        (let* ((xl (loop for i below M ;; *d  , values in -.5 .. .5
 		     collect
 		       (+ -.5 (* (/ 1d0 M) i))))
 	      (x (make-array (length xl) :element-type 'double-float
 			     :initial-contents xl))
-	      (f^ (make-array N :element-type '(complex double-float))))
-	 (setf (aref f^ 2) .1)
-	 (sb-sys:with-pinned-objects (x f^)
+	      (f-hat (make-array N :element-type '(complex double-float))))
+	 (setf (aref f-hat 2) (complex .1d0))
+	 (sb-sys:with-pinned-objects (x f-hat)
 	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x)
-		 (nfft-plan.f-hat plan) (sb-sys:vector-sap f^))
+		 (nfft-plan. plan) (sb-sys:vector-sap f-hat))
 	   (sb-int:with-float-traps-masked (:overflow :invalid)
 	     (nfft-precompute-one-psi plan))
 	   (nfft-trafo plan))))
