@@ -36,7 +36,12 @@
  "/usr/include/wchar.h")
 		    :trace-c2ffi t)
 
+(cffi:load-foreign-library "/usr/local/lib/libnfft3.so")
 
+(autowrap:with-alloc (plan 'nfft-plan)
+  (nfft-init-1d (autowrap:ptr plan)
+		128
+		128))
 #+nil
 (truncate
  (autowrap:foreign-record-bit-size
