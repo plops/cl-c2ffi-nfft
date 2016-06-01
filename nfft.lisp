@@ -74,6 +74,27 @@
        (nfft-init-1d plan N M)
        (nfft-vrand-shifted-unit-double (nfft-plan.x plan)
 				       (nfft-plan.m-total plan))
+       (when (= 1 (logand +PRE-ONE-PSI+
+			  (nfft-plan.flags plan)))
+	 (nfft-precompute-one-psi))
+       (nfft-vrand-unit-complex (nfft-plan.f-hat plan)
+				(nfft-plan.n-total plan)
+				)
+       (nfft-vpr-complex (nfft-plan.f-hat plan)
+			 (nfft-plan.n-total plan)
+			 "given fourier coefficients vector f hat"))
+      (nfft-finalize plan))))
+#+nil
+(let ((d 1) ;; spatial dimension
+      (N 14) ;; number of fourier coefficients
+      (M 19) ;; number of non-equidistant nodes 
+      )
+  (autowrap:with-alloc (plan 'nfft-plan)
+    (unwind-protect
+     (progn
+       (nfft-init-1d plan N M)
+       (nfft-vrand-shifted-unit-double (nfft-plan.x plan)
+				       (nfft-plan.m-total plan))
        (let* ((xl (loop for i below M ;; *d  , values in -.5 .. .5
 		     collect
 		       (+ -.5 (* (/ 1d0 M) i))))
@@ -85,7 +106,7 @@
 	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x)
 		 (nfft-plan.f-hat plan) (sb-sys:vector-sap f-hat))
 	   (sb-int:with-float-traps-masked (:overflow :invalid)
-	     (nfft-precompute-one-psi plan))
+	     (nfft-precompute-one-psi plan)) 
 	   ;(nfft-trafo-direct plan)
 	   (nfft-trafo plan)
 	   )))
