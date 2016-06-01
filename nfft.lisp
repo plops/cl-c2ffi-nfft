@@ -72,9 +72,8 @@
     (unwind-protect
      (progn
        (nfft-init-1d plan N M)
-       (nfft-vrand-shifed-unit-double (nfft-plan.x plan)
-				      (nfft-plan. plan))
-       (setf (nfft-plan.flags plan) +PRE-ONE-PSI+)
+       (nfft-vrand-shifted-unit-double (nfft-plan.x plan)
+				       (nfft-plan.m-total plan))
        (let* ((xl (loop for i below M ;; *d  , values in -.5 .. .5
 		     collect
 		       (+ -.5 (* (/ 1d0 M) i))))
@@ -84,10 +83,12 @@
 	 (setf (aref f-hat 2) (complex .1d0))
 	 (sb-sys:with-pinned-objects (x f-hat)
 	   (setf (nfft-plan.x plan) (sb-sys:vector-sap x)
-		 (nfft-plan. plan) (sb-sys:vector-sap f-hat))
+		 (nfft-plan.f-hat plan) (sb-sys:vector-sap f-hat))
 	   (sb-int:with-float-traps-masked (:overflow :invalid)
 	     (nfft-precompute-one-psi plan))
-	   (nfft-trafo plan))))
+	   ;(nfft-trafo-direct plan)
+	   (nfft-trafo plan)
+	   )))
       (nfft-finalize plan))))
 #+nil
 (truncate
